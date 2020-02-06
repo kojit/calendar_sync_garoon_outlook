@@ -94,7 +94,7 @@ def update_outlook_event(cfg, oevent, gid, gevent):
     if end != oevent.end:
         oevent.end = end
 
-    if len(gevent['facilities']) > 0:
+    if 'facilities' in gevent and len(gevent['facilities']) > 0:
         location = gevent['facilities'][0]['name']
         if not oevent.location or location != oevent.location['displayName']:
             oevent.location = location
