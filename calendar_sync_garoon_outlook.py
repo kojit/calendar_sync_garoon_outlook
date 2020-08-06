@@ -45,7 +45,7 @@ def get_garoon_events(cfg, now, end):
             gid = event['id'] + '_' + event['repeatId']
         else:
             gid = event['id']
-        print('Garoon {} {}'.format(gid, event['subject']))
+        #print('Garoon {} {}'.format(gid, event['subject']))
         if event['subject'].startswith('OID:'):
             oidpair = event['subject'].split()[0]
             outlook_id = oidpair.split(':')[1]
@@ -65,18 +65,31 @@ def get_outlook_events(cfg, now, end):
 
     q = calendar.new_query('start').greater_equal(now)
     q.chain('and').on_attribute('end').less_equal(end)
+    events = calendar.get_events(limit=100, query=q, include_recurring=True)
+    """
+    # we can only get 25 events, so I will get every weeks
+    now = dt.datetime.now().astimezone()
+    events = []
+    for i in range(WEEKS):
+        end = now + dt.timedelta(weeks=1)
+        q = calendar.new_query('start').greater_equal(now)
+        q.chain('and').on_attribute('end').less_equal(end)
+        now = end
+        events = events + list(calendar.get_events(limit=100, query=q, include_recurring=True))
+    """
 
-    events = calendar.get_events(query=q, include_recurring=True)
     garoon_origin_events = {}
     outlook_events = {}
     for event in events:
-        print('Outlook ' + event.subject)
+        #print('Outlook ' + event.subject)
         if event.subject.startswith('GID:'):
             gidpair = event.subject.split()[0]
             garoon_id = gidpair.split(':')[1]
             garoon_origin_events[garoon_id] = event
+            print('Outlook - Garoon Origin Event ' + event.subject)
         else:
             outlook_events[event.object_id] = event
+            print('Outlook - Outlook Origin Event ' + event.subject)
     return calendar, garoon_origin_events, outlook_events
 
 
@@ -131,7 +144,7 @@ def main(cfg):
         if key in garoon_origin_events:
             update_outlook_event(cfg, garoon_origin_events[key], key, value)
         else:
-            print('add event - {}'.format(value['subject']))
+            print('add event - {} {}'.format(key, value['subject']))
             oevent = outlook_calendar.new_event()  # creates a new unsaved event
             update_outlook_event(cfg, oevent, key, value)
 
